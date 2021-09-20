@@ -17,7 +17,7 @@ func forward(port int, target string, maxRetries int) error {
 	if port <= 0 {
 		return fmt.Errorf("invalid port %d\n", port)
 	}
-	_, err := url.Parse(target)
+	targetURL, err := url.Parse(target)
 	if err != nil {
 		return fmt.Errorf("error parsing URL: %v\n", err)
 	}
@@ -28,7 +28,7 @@ func forward(port int, target string, maxRetries int) error {
 			},
 		},
 	}
-	forwardRequestHandler := newRequestForwarder(port, target, httpClient)
+	forwardRequestHandler := newRequestForwarder(port, targetURL, httpClient)
 	portStr := strconv.Itoa(port)
 
 	retryCount := 0
@@ -44,15 +44,14 @@ func forward(port int, target string, maxRetries int) error {
 	return nil
 }
 
-func newRequestForwarder(port int, target string, httpClient http.Client) http.HandlerFunc {
+func newRequestForwarder(port int, targetURL *url.URL, httpClient http.Client) http.HandlerFunc {
 	reqCount := 0
 	return func(w http.ResponseWriter, r *http.Request) {
 		reqID := reqCount
 		reqCount++
 
-		scheme := r.URL.Scheme
-		r.URL.Host = target
-		r.URL.Scheme = scheme
+		r.URL.Host = targetURL.Host
+		r.URL.Scheme = targetURL.Scheme
 		newURL := r.URL.String()
 
 		log.Printf("[:%d #%d] %s %s\n", port, reqID, r.Method, newURL)
@@ -79,7 +78,7 @@ func newRequestForwarder(port int, target string, httpClient http.Client) http.H
 			}
 		}
 
-		log.Printf("[:%d #%d] %d %s\n", port, reqID, res.StatusCode, res.Status)
+		log.Printf("[:%d #%d] %s\n", port, reqID, res.Status)
 
 		if res.Body != nil {
 			defer res.Body.Close()
