@@ -1,0 +1,8 @@
+{
+	"forward": [
+		{
+			"port": 4140,
+			"target": "http://internal-l5d-int-uw2-1-qa1-gw-2062285746.us-west-2.elb.amazonaws.com:4140"
+		}
+	]
+}
